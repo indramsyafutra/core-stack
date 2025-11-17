@@ -1,0 +1,127 @@
+# ========================
+# config.yaml – minimal, clean
+# ========================
+
+apisix:
+  node_listen:
+    - 9080
+  enable_admin: true
+  enable_ipv6: false
+  config_center: etcd
+
+plugins:
+  - real-ip
+  - ip-restriction
+  - limit-count
+  - cors
+  - prometheus
+  - proxy-rewrite
+  - redirect
+  - serverless-pre-function
+  - serverless-post-function
+  - response-rewrite
+  - jwt-auth
+  - key-auth
+  - response-rewrite
+  - redirect
+  - cors
+  
+stream_plugins: 
+  - ip-restriction
+  - limit-conn
+
+# Nonaktifkan semua plugin Lain supaya tidak muncul warning "new plugins"
+plugin_attr:
+  default_disable:
+    - authz-casbin
+    - authz-casdoor
+    - authz-keycloak
+    - basic-auth
+    - body-transformer
+    - chaitin-waf
+    - clickhouse-logger
+    - client-control
+    - datadog
+    - degraphql
+    - echo
+    - elasticsearch-logger
+    - example-plugin
+    - ext-plugin-pre-req
+    - ext-plugin-post-req
+    - ext-plugin-post-resp
+    - file-logger
+    - forward-auth
+    - fault-injection
+    - google-cloud-logging
+    - grpc-transcode
+    - grpc-web
+    - gzip
+    - hmac-auth
+    - http-logger
+    - inspect
+    - kafka-logger
+    - kafka-proxy
+    - ldap-auth
+    - limit-req
+    - loggly
+    - loki-logger
+    - mocking
+    - multi-auth
+    - mqtt-proxy
+    - openid-connect
+    - opa
+    - openfunction
+    - openwhisk
+    - public-api
+    - proxy-cache
+    - proxy-control
+    - proxy-mirror
+    - referer-restriction
+    - request-id
+    - request-validation
+    - rocketmq-logger
+    - server-info
+    - skywalking-logger
+    - sls-logger
+    - splunk-hec-logging
+    - syslog
+    - tcp-logger
+    - traffic-split
+    - udp-logger
+    - ua-restriction
+    - uri-blocker
+    - wolf-rbac
+    - workflow
+    - zipkin
+    - csrf
+    - ai
+    - azure-functions
+    - aws-lambda
+    - google-cloud-logging
+    - tencent-cloud-cls
+  stream_default_disable:
+    - syslog
+    - mqtt-proxy
+
+deployment:
+  role: traditional
+  role_traditional:
+    config_provider: etcd
+  etcd:
+    host:
+      - http://etcd:2379
+
+  admin:
+    admin_key:
+      - name: admin
+        key: edd1c9f034335f136f87ad84b625c8f1
+        role: admin
+    allow_admin:
+      - 127.0.0.1
+      - 172.18.0.0/16   # bridge Docker, host kelihatan sebagai 172.18.0.1 dari dalam container
+      - 10.25.0.0/16    # kalau mau allow dari LAN kampus juga
+      - 10.0.0.0/8
+      - 10.12.13.0/24
+
+  
+

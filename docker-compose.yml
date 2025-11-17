@@ -1,0 +1,112 @@
+services:
+  # ========== ETCD ==========
+  etcd:
+    image: ${ETCD_IMAGE}
+    container_name: ${STACK_NAME}-etcd
+    command: >
+      /usr/local/bin/etcd
+      --name sso-etcd
+      --data-dir /etcd-data
+      --advertise-client-urls http://0.0.0.0:2379
+      --listen-client-urls     http://0.0.0.0:2379
+      --listen-peer-urls       http://0.0.0.0:2380
+    volumes:
+      - etcd-data:/etcd-data
+    networks:
+      - ${CORE_NET}
+
+  # ========== APISIX ==========
+  apisix:
+    image: ${APISIX_IMAGE}
+    container_name: ${STACK_NAME}-apisix
+    depends_on:
+      - etcd
+    # Expose:
+    #  - 80  : HTTP gateway
+    #  - 443 : HTTPS gateway
+    #  - 9180: Admin API (hanya internal)
+    ports:
+      - "80:9080"
+      - "443:9443"
+      - "9180:9180"
+    environment:
+      - TZ=${TZ}
+      # Hubungan ke etcd
+      - ETCD_HOST=etcd
+      - ETCD_PORT=2379
+      - APISIX_ADMIN_KEY=${APISIX_ADMIN_KEY}
+    volumes:
+      # Kalau mau pakai config custom nanti:
+      - ./apisix/conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      # Sertifikat TLS kampus
+      - ${SSL_CERT_DIR}:${SSL_CERT_DIR}:ro
+    networks:
+      - ${CORE_NET}
+
+  # ========== POSTGRES (KEYCLOAK) ==========
+  postgres:
+    image: ${POSTGRES_IMAGE}
+    container_name: ${STACK_NAME}-postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=${TZ}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - ${CORE_NET}
+
+  # ========== KEYCLOAK ==========
+  keycloak:
+    image: ${KEYCLOAK_IMAGE}
+    container_name: ${STACK_NAME}-keycloak
+    depends_on:
+      - postgres
+    command:
+      - start
+    environment:
+      - TZ=${TZ}
+      # DB
+      - KC_DB=${KC_DB}
+      - KC_DB_URL_HOST=${KC_DB_URL_HOST}
+      - KC_DB_URL_DATABASE=${KC_DB_URL_DATABASE}
+      - KC_DB_USERNAME=${KC_DB_USERNAME}
+      - KC_DB_PASSWORD=${KC_DB_PASSWORD}
+      # HTTP & proxy
+      - KC_HTTP_ENABLED=${KC_HTTP_ENABLED}
+      - KC_HTTP_PORT=${KC_HTTP_PORT}
+      - KC_PROXY_HEADERS=${KC_PROXY_HEADERS}
+      # Hostname publik
+      - KC_HOSTNAME=${SSO_HOST}
+      # Admin user
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+    networks:
+      - ${CORE_NET}
+    volumes:
+      - kc-data:/opt/keycloak/data
+
+  # ========== PORTAINER ==========
+  portainer:
+    image: ${PORTAINER_IMAGE}
+    container_name: ${STACK_NAME}-portainer
+    restart: always
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    networks:
+      - ${CORE_NET}
+
+networks:
+  core-net:
+    driver: bridge
+
+volumes:
+  etcd-data:
+  postgres-data:
+  kc-data:
+  portainer-data:
