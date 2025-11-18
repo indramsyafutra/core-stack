@@ -178,9 +178,9 @@ cat > "$TMPDIR/route_ops.json" <<EOF
 EOF
 apply_put "$APISIX_ADMIN_URL/apisix/admin/routes/route_ops" "$TMPDIR/route_ops.json" || warn "route_ops may have failed"
 
-cat > "$TMPDIR/route_dash.json" <<EOF
+cat > "$TMPDIR/route_dashboard.json" <<EOF
 {
-  "id": "route_dash",
+  "id": "route_dashboard",
   "uri": "/*",
   "hosts": ["dash.uin-suska.ac.id"],
   "priority": 10,
@@ -210,7 +210,7 @@ cat > "$TMPDIR/route_dash.json" <<EOF
   }
 }
 EOF
-apply_put "$APISIX_ADMIN_URL/apisix/admin/routes/route_dash" "$TMPDIR/route_dash.json" || warn "route_dash may have failed"
+apply_put "$APISIX_ADMIN_URL/apisix/admin/routes/route_dashboard" "$TMPDIR/route_dashboard.json" || warn "route_dashboard may have failed"
 
 # 5) SSL object
 if [ ! -f "$SSL_CERT_PATH" ] || [ ! -f "$SSL_CERT_KEY" ]; then
