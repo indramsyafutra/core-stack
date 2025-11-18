@@ -10,8 +10,8 @@ set -Eeuo pipefail
 
 APISIX_ADMIN_URL="${APISIX_ADMIN_URL:-http://127.0.0.1:9180}"
 AK="${AK:-${APISIX_ADMIN_API_KEY:-}}"
-SSO_HOST="${SSO_HOST:-sso.uin-suska.com}"
-OPS_HOST="${OPS_HOST:-ops.uin-suska.com}"
+SSO_HOST="${SSO_HOST:-sso.uin-suska.ac.id}"
+OPS_HOST="${OPS_HOST:-ops.uin-suska.ac.id}"
 SSL_CERT_PATH="${SSL_CERT_PATH:-/etc/ssl/uinsuska/fullchain.crt}"
 SSL_CERT_KEY="${SSL_CERT_KEY:-/etc/ssl/uinsuska/private.key}"
 DASH_HOST="${DASH_HOST:-dash.uin-suska.ac.id}"
