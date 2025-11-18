@@ -14,6 +14,8 @@ SSO_HOST="${SSO_HOST:-sso.uin-suska.com}"
 OPS_HOST="${OPS_HOST:-ops.uin-suska.com}"
 SSL_CERT_PATH="${SSL_CERT_PATH:-/etc/ssl/uinsuska/fullchain.crt}"
 SSL_CERT_KEY="${SSL_CERT_KEY:-/etc/ssl/uinsuska/private.key}"
+DASH_HOST="${DASH_HOST:-dash.uin-suska.ac.id}"
+DASH_UPSTREAM_NODE="${DASH_UPSTREAM_NODE:-apisix-dashboard:9000}"
 
 # colors
 C_RST="\033[0m"
@@ -88,7 +90,6 @@ cat > "$TMPDIR/upstream_keycloak.json" <<EOF
   "pass_host": "pass"
 }
 EOF
-
 apply_put "$APISIX_ADMIN_URL/apisix/admin/upstreams/up_sso" "$TMPDIR/upstream_keycloak.json" || { err "upstream up_sso failed"; exit 1; }
 
 # 2) Upstream - portainer (optional)
@@ -102,8 +103,22 @@ cat > "$TMPDIR/upstream_portainer.json" <<EOF
   }
 }
 EOF
-
 apply_put "$APISIX_ADMIN_URL/apisix/admin/upstreams/up_portainer" "$TMPDIR/upstream_portainer.json" || warn "upstream up_portainer may have failed"
+
+cat > "$TMPDIR/upstream_dashboard.json" <<EOF
+# upstream up_dashboard
+{
+  "id": "up_dash",
+  "type": "roundrobin",
+  "scheme": "http",
+  "nodes": {
+    "apisix-dashboard:9000": 1
+  },
+  "pass_host": "pass"
+}
+EOF
+apply_put "$APISIX_ADMIN_URL/apisix/admin/upstreams/up_dashboard" "$TMPDIR/upstream_dashboard.json" || warn "upstream up_dashboard may have failed"
+
 
 # 3) Route SSO -> up_sso
 cat > "$TMPDIR/route_sso.json" <<EOF
@@ -132,7 +147,6 @@ cat > "$TMPDIR/route_sso.json" <<EOF
   }
 }
 EOF
-
 apply_put "$APISIX_ADMIN_URL/apisix/admin/routes/route_sso" "$TMPDIR/route_sso.json" || { err "route_sso failed"; exit 1; }
 
 # 4) Route OPS -> up_portainer
@@ -162,8 +176,41 @@ cat > "$TMPDIR/route_ops.json" <<EOF
   }
 }
 EOF
-
 apply_put "$APISIX_ADMIN_URL/apisix/admin/routes/route_ops" "$TMPDIR/route_ops.json" || warn "route_ops may have failed"
+
+cat > "$TMPDIR/route_dash.json" <<EOF
+{
+  "id": "route_dash",
+  "uri": "/*",
+  "hosts": ["dash.uin-suska.ac.id"],
+  "priority": 10,
+  "upstream_id": "up_dashboard",
+  "plugins": {
+    "ip-restriction": {
+      "whitelist": [
+        "10.0.0.0/16",
+        "192.168.0.0/16"
+      ]
+    },
+    "proxy-rewrite": {
+      "headers": {
+        "X-Forwarded-Proto": "https",
+        "X-Forwarded-Host": "dash.uin-suska.ac.id",
+        "X-Forwarded-Port": "443"
+      }
+    },
+    "response-rewrite": {
+      "headers": {
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "no-referrer-when-downgrade"
+      }
+    }
+  }
+}
+EOF
+apply_put "$APISIX_ADMIN_URL/apisix/admin/routes/route_dash" "$TMPDIR/route_dash.json" || warn "route_dash may have failed"
 
 # 5) SSL object
 if [ ! -f "$SSL_CERT_PATH" ] || [ ! -f "$SSL_CERT_KEY" ]; then
