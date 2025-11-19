@@ -106,7 +106,6 @@ EOF
 apply_put "$APISIX_ADMIN_URL/apisix/admin/upstreams/up_portainer" "$TMPDIR/upstream_portainer.json" || warn "upstream up_portainer may have failed"
 
 cat > "$TMPDIR/upstream_dashboard.json" <<EOF
-# upstream up_dashboard
 {
   "id": "up_dashboard",
   "type": "roundrobin",
