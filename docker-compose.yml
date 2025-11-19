@@ -80,8 +80,8 @@ services:
       # Hostname publik
       - KC_HOSTNAME=${SSO_HOST}
       # Admin user
-      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      # - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN}
+      # - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
     networks:
       - ${CORE_NET}
     volumes:
